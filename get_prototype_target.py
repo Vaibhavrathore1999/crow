@@ -1,7 +1,7 @@
 import torch
 from sklearn.cluster import KMeans
 from torch.utils.data import DataLoader
-from utils import cluster_acc, accuracy
+from crow_utils import cluster_acc, accuracy
 import dataset
 import argparse
 import os

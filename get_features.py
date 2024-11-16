@@ -26,12 +26,15 @@ elif dataset_name == 'VisDA':
 elif dataset_name == 'DomainNet':
     source = 'clipart'
     target_list = ['painting', 'real', 'sketch']
+elif dataset_name == 'PACS':
+    source = 'art_painting'
+    target_list = ['art_painting', 'cartoon', 'photo', 'sketch']
 else:
     raise Exception('Invalid dataset name.')
 
 # 2. Load model
-model, _ = clip.load("./ckpt/clip/ViT-L-14-336px.pt", device=device)
-
+# model, _ = clip.load("./ckpt/clip/ViT-L-14-336px.pt", device=device)
+model=torch.hub.load('facebookresearch/dino:main', 'dino_vitb16',pretrained=True).to(device)
 # 3. Save representation features
 path_representations = f'./representations/{dataset_name}'
 if not os.path.exists(path_representations):
@@ -52,7 +55,8 @@ with torch.no_grad():
             img_t = img_t.to(device)
 
             # compute features
-            feature_lastlayer = model.encode_image(img_t)
+            # feature_lastlayer = model.encode_image(img_t)
+            feature_lastlayer = model(img_t)
             feature_lastlayer = feature_lastlayer.squeeze()
 
             # save featrues

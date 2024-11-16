@@ -6,6 +6,18 @@ import torch.nn.functional as F
 import os
 import clip
 from torchvision import transforms
+from torchvision import transforms
+
+# Define the preprocessing pipeline for ViT-B/16
+vit_preprocess = transforms.Compose([
+    transforms.Resize(256),                  # Resize to 256 on the shorter side
+    transforms.CenterCrop(224),              # Crop the center to 224x224
+    transforms.ToTensor(),                   # Convert image to PyTorch tensor
+    transforms.Normalize(                    # Normalize with ImageNet mean and std
+        mean=[0.485, 0.456, 0.406],         
+        std=[0.229, 0.224, 0.225]
+    )
+])
 
 class UniDA_dataset(Dataset):
 
@@ -34,6 +46,8 @@ class UniDA_dataset(Dataset):
                     impath = os.path.join(path_prefix, source, impath)
                 elif dataset_name == 'DomainNet':
                     impath = os.path.join(path_prefix, impath)
+                elif dataset_name == 'PACS':  # Add PACS dataset
+                    impath = os.path.join(path_prefix, impath)
                 label = x.split(' ')[1].strip()
                 classname = impath.split('/')[-2].replace('_', ' ')
                 item = {'impath': impath,
@@ -57,6 +71,8 @@ class UniDA_dataset(Dataset):
                     impath = os.path.join(path_prefix, target, impath)
                 elif dataset_name == 'DomainNet':
                     impath = os.path.join(path_prefix, impath)
+                elif dataset_name == 'PACS':  # Add PACS dataset
+                    impath = os.path.join(path_prefix, impath)
                 label = x.split(' ')[1].strip()
                 classname = impath.split('/')[-2].replace('_', ' ')
                 item = {'impath': impath,
@@ -66,17 +82,30 @@ class UniDA_dataset(Dataset):
 
         self.images_target = lst
 
-        _, self.preprocess = clip.load("./ckpt/clip/ViT-L-14-336px.pt")
+        # _, self.preprocess = clip.load("./ckpt/clip/ViT-L-14-336px.pt")
+        # Use ViT preprocessing
+        self.preprocess = vit_preprocess
 
+    # def __getitem__(self, idx):
+
+    #     img_s = self.preprocess(Image.open(self.images_source[idx % len(self.images_source)]['impath']))
+    #     label_s = self.images_source[idx % len(self.images_source)]['label']
+
+    #     img_t = self.preprocess(Image.open(self.images_target[idx % len(self.images_target)]['impath']))
+    #     label_t = self.images_target[idx % len(self.images_target)]['label']
+
+    #     return img_s, label_s, img_t, label_t
+    
     def __getitem__(self, idx):
-
-        img_s = self.preprocess(Image.open(self.images_source[idx % len(self.images_source)]['impath']))
+        img_s = self.preprocess(Image.open(self.images_source[idx % len(self.images_source)]['impath']).convert('RGB'))
         label_s = self.images_source[idx % len(self.images_source)]['label']
 
-        img_t = self.preprocess(Image.open(self.images_target[idx % len(self.images_target)]['impath']))
+        img_t = self.preprocess(Image.open(self.images_target[idx % len(self.images_target)]['impath']).convert('RGB'))
         label_t = self.images_target[idx % len(self.images_target)]['label']
 
         return img_s, label_s, img_t, label_t
+
+
     
     def __len__(self):
         return max(len(self.images_source), len(self.images_target))
@@ -114,9 +143,11 @@ class UniDA_lastlayerfeature(Dataset):
                     impath = os.path.join(path_prefix, source, impath)
                 elif name == 'DomainNet':
                     impath = os.path.join(path_prefix, impath)
+                elif name == 'PACS':  # Add PACS support
+                    impath = os.path.join(path_prefix, impath)
                 else:
                     impath = os.path.join(path_prefix, impath)
-                
+                    
                 label = x.split(' ')[1].strip()
                 classname = impath.split('/')[-2].replace('_', ' ')
                 item = {'impath': impath,
@@ -136,11 +167,13 @@ class UniDA_lastlayerfeature(Dataset):
                     tmp = impath.split('/')
                     impath = os.path.join(path_prefix, tmp[1], tmp[3], tmp[4])
                 elif name == 'OfficeHome':
-                    impath = os.path.join(path_prefix, impath[5:])
+                    impath = os.path.join(path_prefix, impath[5:])                    
                 elif name == 'VisDA':
                     impath = os.path.join(path_prefix, target, impath)
                 elif name == 'DomainNet':
                     impath = os.path.join(path_prefix, impath)
+                elif name == 'PACS':  # Add PACS dataset
+                    impath = os.path.join(path_prefix, impath)                    
                 else:
                     impath = os.path.join(path_prefix, impath)
                 

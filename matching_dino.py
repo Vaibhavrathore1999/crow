@@ -93,7 +93,7 @@ for source in source_list:
         if finetune == True:
             for name, param in feature_extractor.named_parameters(): 
                 # You can try to change the layers to finetuen!
-                if 'blocks.11' in name or 'visual.proj' in name or 'resblocks.23' in name or 'resblocks.22' in name or 'ln_post' in name:
+                if 'visual.proj' in name or 'resblocks.23' in name or 'resblocks.22' in name or 'ln_post' in name:
                     param.requires_grad = True
 
         # 2.2.2. Get head (classifier)
@@ -117,8 +117,8 @@ for source in source_list:
 
                 img_s = img_s.to(device)
 
-                # feature_s = feature_extractor.encode_image(img_s).to(torch.float32)
-                feature_s = feature_extractor(img_s).to(torch.float32)
+                feature_s = feature_extractor.encode_image(img_s).to(torch.float32)
+
                 mask = label_s < seen_num
                 feature_s = feature_s[mask]
                 label_s = label_s[mask]
@@ -182,10 +182,8 @@ for source in source_list:
                 img_s = img_s.to(device)
                 img_t = img_t.to(device)
 
-                # feature_s = feature_extractor.encode_image(img_s).to(torch.float32)
-                # feature_t = feature_extractor.encode_image(img_t).to(torch.float32)
-                feature_s = feature_extractor(img_s).to(torch.float32)
-                feature_t = feature_extractor(img_t).to(torch.float32)
+                feature_s = feature_extractor.encode_image(img_s).to(torch.float32)
+                feature_t = feature_extractor.encode_image(img_t).to(torch.float32)
 
                 output_source, _, _ = head(feature_s)
                 output_target, _, _ = head(feature_t)
@@ -218,8 +216,7 @@ for source in source_list:
                     head.eval()
 
                     img_t = img_t.to(device)
-                    # feature_t = feature_extractor.encode_image(img_t).to(torch.float32)
-                    feature_t = feature_extractor(img_t).to(torch.float32)
+                    feature_t = feature_extractor.encode_image(img_t).to(torch.float32)
                     output_t, _, _ = head(feature_t)
 
                     if count_tmp == 0:
