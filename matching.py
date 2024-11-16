@@ -59,7 +59,10 @@ elif dataset_name == 'DomainNet':
     source_list = ['painting', 'real', 'sketch']
     target_list = ['painting', 'real', 'sketch']
     total_num = 345
-
+elif dataset_name == 'PACS':
+    source_list = ['art_painting', 'cartoon', 'photo', 'sketch']
+    target_list = ['art_painting', 'cartoon', 'photo', 'sketch']
+    total_num = 7
 seen_num = int(round(total_num * seen_classes))
 
 criterion = nn.CrossEntropyLoss()

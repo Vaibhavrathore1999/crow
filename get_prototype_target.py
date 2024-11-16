@@ -38,6 +38,10 @@ elif dataset_name == 'DomainNet':
     total_class_num = 345
     source = 'clipart'
     target_list = ['painting', 'real', 'sketch']
+elif dataset_name == 'PACS':
+    total_class_num = 7
+    source = 'art_painting'
+    target_list = ['art_painting', 'cartoon', 'photo', 'sketch']
 else:
     raise Exception('Invalid dataset name.')
 

@@ -47,7 +47,7 @@ class UniDA_dataset(Dataset):
                 elif dataset_name == 'DomainNet':
                     impath = os.path.join(path_prefix, impath)
                 elif dataset_name == 'PACS':  # Add PACS dataset
-                    impath = os.path.join(path_prefix, impath)
+                    impath = os.path.join(path_prefix, impath[5:])
                 label = x.split(' ')[1].strip()
                 classname = impath.split('/')[-2].replace('_', ' ')
                 item = {'impath': impath,
@@ -72,7 +72,7 @@ class UniDA_dataset(Dataset):
                 elif dataset_name == 'DomainNet':
                     impath = os.path.join(path_prefix, impath)
                 elif dataset_name == 'PACS':  # Add PACS dataset
-                    impath = os.path.join(path_prefix, impath)
+                    impath = os.path.join(path_prefix, impath[5:])
                 label = x.split(' ')[1].strip()
                 classname = impath.split('/')[-2].replace('_', ' ')
                 item = {'impath': impath,
@@ -144,7 +144,7 @@ class UniDA_lastlayerfeature(Dataset):
                 elif name == 'DomainNet':
                     impath = os.path.join(path_prefix, impath)
                 elif name == 'PACS':  # Add PACS support
-                    impath = os.path.join(path_prefix, impath)
+                    impath = os.path.join(path_prefix, impath[5:])
                 else:
                     impath = os.path.join(path_prefix, impath)
                     
@@ -173,7 +173,7 @@ class UniDA_lastlayerfeature(Dataset):
                 elif name == 'DomainNet':
                     impath = os.path.join(path_prefix, impath)
                 elif name == 'PACS':  # Add PACS dataset
-                    impath = os.path.join(path_prefix, impath)                    
+                    impath = os.path.join(path_prefix, impath[5:])                    
                 else:
                     impath = os.path.join(path_prefix, impath)
                 

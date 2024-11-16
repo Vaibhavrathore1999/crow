@@ -1,7 +1,7 @@
 import os
 
 # Define the base directory containing the PACS dataset
-base_dir = "../PACS"  # Replace with the path to your dataset
+base_dir = "/raid/biplab/sarthak/crow/Datasets/PACS"  # Replace with the path to your dataset
 domains = ["art_painting", "cartoon", "photo", "sketch"]  # List of domains
 
 def create_txt_files(base_dir, domains):
@@ -29,7 +29,9 @@ def create_txt_files(base_dir, domains):
                     img_path = os.path.join(class_path, img)
                     if os.path.isfile(img_path):
                         # Write the image path and label to the .txt file
-                        txt_file.write(f"{img_path} {class_to_label[cls]}\n")
+                        adding_text=os.path.join("data",img_path.split('/')[-3:])
+                        txt_file.write(f"{adding_text} {class_to_label[cls]}\n")
+                        # txt_file.write(f"{img_path} {class_to_label[cls]}\n")
         
         print(f"File created: {output_file}")
 
