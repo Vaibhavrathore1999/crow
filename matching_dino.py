@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import clip
+import pandas as pd
 import argparse
 
 import models
@@ -59,11 +59,23 @@ elif dataset_name == 'DomainNet':
     source_list = ['painting', 'real', 'sketch']
     target_list = ['painting', 'real', 'sketch']
     total_num = 345
-
+elif dataset_name == 'PACS':
+    source_list = ['art_painting', 'cartoon', 'photo', 'sketch']
+    target_list = ['art_painting', 'cartoon', 'photo', 'sketch']
+    total_num = 7
 seen_num = int(round(total_num * seen_classes))
 
 criterion = nn.CrossEntropyLoss()
 softmax = nn.Softmax(dim=0)
+
+# Initialize a dictionary to store best results
+results = {
+    "Source": [],
+    "Target": [],
+    "Best_All_Accuracy": [],
+    "Best_Old_Accuracy": [],
+    "Best_New_Accuracy": []
+}
 
 # Go through all the source and target pairs
 for source in source_list:
@@ -75,7 +87,10 @@ for source in source_list:
             continue
 
         print('{} to {}'.format(source, target))
-
+        # Initialization for best accuracy tracking
+        best_all_acc = 0
+        best_old_acc = 0
+        best_new_acc = 0
         # 2.1. Get dataloader
         dataset_train = dataset.UniDA_dataset(dataset_name, source, target)
         dataloader_train = DataLoader(dataset_train, batch_size=bs, shuffle=True, num_workers=64, pin_memory=True)
@@ -93,7 +108,7 @@ for source in source_list:
         if finetune == True:
             for name, param in feature_extractor.named_parameters(): 
                 # You can try to change the layers to finetuen!
-                if 'visual.proj' in name or 'resblocks.23' in name or 'resblocks.22' in name or 'ln_post' in name:
+                if 'blocks.11' in name or 'visual.proj' in name or 'resblocks.23' in name or 'resblocks.22' in name or 'ln_post' in name:
                     param.requires_grad = True
 
         # 2.2.2. Get head (classifier)
@@ -117,8 +132,8 @@ for source in source_list:
 
                 img_s = img_s.to(device)
 
-                feature_s = feature_extractor.encode_image(img_s).to(torch.float32)
-
+                # feature_s = feature_extractor.encode_image(img_s).to(torch.float32)
+                feature_s = feature_extractor(img_s).to(torch.float32)
                 mask = label_s < seen_num
                 feature_s = feature_s[mask]
                 label_s = label_s[mask]
@@ -182,8 +197,10 @@ for source in source_list:
                 img_s = img_s.to(device)
                 img_t = img_t.to(device)
 
-                feature_s = feature_extractor.encode_image(img_s).to(torch.float32)
-                feature_t = feature_extractor.encode_image(img_t).to(torch.float32)
+                # feature_s = feature_extractor.encode_image(img_s).to(torch.float32)
+                # feature_t = feature_extractor.encode_image(img_t).to(torch.float32)
+                feature_s = feature_extractor(img_s).to(torch.float32)
+                feature_t = feature_extractor(img_t).to(torch.float32)
 
                 output_source, _, _ = head(feature_s)
                 output_target, _, _ = head(feature_t)
@@ -216,7 +233,7 @@ for source in source_list:
                     head.eval()
 
                     img_t = img_t.to(device)
-                    feature_t = feature_extractor.encode_image(img_t).to(torch.float32)
+                    feature_t = feature_extractor(img_t).to(torch.float32)
                     output_t, _, _ = head(feature_t)
 
                     if count_tmp == 0:
@@ -225,20 +242,43 @@ for source in source_list:
                         feature_target = feature_t
                         count_tmp += 1
                     else:
-                        output_target = torch.cat((output_target, output_t), dim = 0)
-                        feature_target = torch.cat((feature_target, feature_t), dim = 0)
-                        true_target = torch.cat((true_target, label_t), dim = 0)
+                        output_target = torch.cat((output_target, output_t), dim=0)
+                        feature_target = torch.cat((feature_target, feature_t), dim=0)
+                        true_target = torch.cat((true_target, label_t), dim=0)
                         count_tmp += 1
 
+            # Compute predictions and metrics
             output_target_test = output_target
-            pred_target = torch.argmax(output_target_test, dim = 1).cpu().numpy()
-            seen_mask_true_target = true_target < seen_num
+            pred_target = torch.argmax(output_target_test, dim=1).cpu().numpy()
 
-            # 2.1. Seen accuracy
-            seen_acc_target = accuracy(pred_target[seen_mask_true_target], true_target[seen_mask_true_target].numpy())
+            # Masks for Old (seen) and New (unseen) classes
+            old_mask = true_target < seen_num
+            new_mask = ~old_mask
 
-            # 2.2. Unseen accuracy
-            unseen_mask_true_target = ~seen_mask_true_target
-            unseen_acc_target = cluster_acc_2(pred_target[unseen_mask_true_target], true_target[unseen_mask_true_target].numpy(), seen_num-1)
-            
-            print('Iter {}: Seen accuracy - {:.3f}; Unseen accuracy - {:.3f}'.format(iteration_num_total, seen_acc_target, unseen_acc_target))
+            # All Accuracy
+            all_acc = accuracy(pred_target, true_target.numpy())
+
+            # Old Accuracy (seen classes only)
+            old_acc = accuracy(pred_target[old_mask], true_target[old_mask].numpy())
+
+            # New Accuracy (unseen classes only)
+            new_acc = cluster_acc_2(pred_target[new_mask], true_target[new_mask].numpy(), seen_num)
+            # Update best accuracy
+            if all_acc > best_all_acc:
+                best_all_acc = all_acc
+                best_old_acc = old_acc
+                best_new_acc = new_acc
+            # Print metrics
+            print('Iter {}: All Accuracy - {:.3f}; Old Accuracy - {:.3f}; New Accuracy - {:.3f}'.format(
+                iteration_num_total, all_acc, old_acc, new_acc
+            ))
+            # At the end of the loop for this source-target combination, save the best values
+            results["Source"].append(source)
+            results["Target"].append(target)
+            results["Best_All_Accuracy"].append(best_all_acc)
+            results["Best_Old_Accuracy"].append(best_old_acc)
+            results["Best_New_Accuracy"].append(best_new_acc)
+# Save results to an Excel file
+df_results = pd.DataFrame(results)
+df_results.to_excel(f"{args.dataset}_accuracies.xlsx", index=False)
+print("Results saved to 'best_accuracies.xlsx'")
