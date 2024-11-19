@@ -1,8 +1,8 @@
 import os
 
 # Define the base directory containing the PACS dataset
-base_dir = "/raid/biplab/sarthak/crow/Datasets/PACS"  # Replace with the path to your dataset
-domains = ["art_painting", "cartoon", "photo", "sketch"]  # List of domains
+base_dir = "/raid/biplab/sarthak/crow/Datasets/DomainNet"  # Replace with the path to your dataset
+domains = ['clipart','infograph','quickdraw']  # List of domains
 
 def create_txt_files(base_dir, domains):
     for domain in domains:
@@ -16,7 +16,7 @@ def create_txt_files(base_dir, domains):
         class_to_label = {cls: idx for idx, cls in enumerate(classes)}  # Assign labels to classes
         
         # Prepare the .txt file
-        output_file = f"/raid/biplab/sarthak/crow/Datasets/PACS/{domain}.txt"
+        output_file = f"/raid/biplab/sarthak/crow/Datasets/DomainNet/{domain}.txt"
         with open(output_file, "w") as txt_file:
             for cls in classes:
                 class_path = os.path.join(domain_path, cls)
@@ -29,7 +29,7 @@ def create_txt_files(base_dir, domains):
                     img_path = os.path.join(class_path, img)
                     if os.path.isfile(img_path):
                         # Write the image path and label to the .txt file
-                        adding_text=os.path.join("data",img_path.split('/')[-3:])
+                        adding_text = os.path.join("data", *img_path.split('/')[-3:])
                         txt_file.write(f"{adding_text} {class_to_label[cls]}\n")
                         # txt_file.write(f"{img_path} {class_to_label[cls]}\n")
         

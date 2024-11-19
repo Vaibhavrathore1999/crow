@@ -37,7 +37,7 @@ elif dataset_name == 'VisDA':
 elif dataset_name == 'DomainNet':
     total_class_num = 345
     source = 'clipart'
-    target_list = ['painting', 'real', 'sketch']
+    target_list = ['painting', 'real', 'sketch','clipart','infograph','quickdraw']
 elif dataset_name == 'PACS':
     total_class_num = 7
     source = 'art_painting'

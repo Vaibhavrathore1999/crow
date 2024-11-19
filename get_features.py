@@ -25,7 +25,7 @@ elif dataset_name == 'VisDA':
     target_list = ['validation', 'train']
 elif dataset_name == 'DomainNet':
     source = 'clipart'
-    target_list = ['painting', 'real', 'sketch']
+    target_list = ['painting', 'real', 'sketch','clipart','infograph','quickdraw']
 elif dataset_name == 'PACS':
     source = 'art_painting'
     target_list = ['art_painting', 'cartoon', 'photo', 'sketch']

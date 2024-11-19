@@ -5,9 +5,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 import pandas as pd
 import argparse
-
+import openpyxl
 import models
-from crow_utils import accuracy, cluster_acc_2, entropy
+from crow_utils import accuracy, cluster_acc_2, entropy , split_cluster_acc_v2
 import dataset
 from torch.utils.data import DataLoader
 
@@ -24,8 +24,8 @@ parser.add_argument("--learning_rate", type=float, default=1e-3)
 parser.add_argument("--threshold", type=float, default=0.3)
 parser.add_argument("--weight_reg", type=float, default=0.1)
 parser.add_argument("--temperature", type=float, default=0.01)
-parser.add_argument("--iteration_max", type=int, default=1000)
-parser.add_argument("--iteration_eva", type=int, default=50)
+parser.add_argument("--iteration_max", type=int, default=200)
+parser.add_argument("--iteration_eva", type=int, default=20)
 
 args = parser.parse_args()
 
@@ -56,8 +56,8 @@ if dataset_name == 'VisDA':
     target_list = ['validation']
     total_num = 12
 elif dataset_name == 'DomainNet':
-    source_list = ['painting', 'real', 'sketch']
-    target_list = ['painting', 'real', 'sketch']
+    source_list = ['painting', 'real', 'sketch','clipart']
+    target_list = ['painting', 'real', 'sketch','clipart','infograph','quickdraw']
     total_num = 345
 elif dataset_name == 'PACS':
     source_list = ['art_painting', 'cartoon', 'photo', 'sketch']
@@ -256,13 +256,16 @@ for source in source_list:
             new_mask = ~old_mask
 
             # All Accuracy
-            all_acc = accuracy(pred_target, true_target.numpy())
+            # all_acc = accuracy(pred_target, true_target.numpy())
 
-            # Old Accuracy (seen classes only)
-            old_acc = accuracy(pred_target[old_mask], true_target[old_mask].numpy())
+            # # Old Accuracy (seen classes only)
+            # old_acc = accuracy(pred_target[old_mask], true_target[old_mask].numpy())
 
-            # New Accuracy (unseen classes only)
-            new_acc = cluster_acc_2(pred_target[new_mask], true_target[new_mask].numpy(), seen_num)
+            # # New Accuracy (unseen classes only)
+            # new_acc = cluster_acc_2(pred_target[new_mask], true_target[new_mask].numpy(), seen_num)
+            
+            all_acc, old_acc, new_acc = split_cluster_acc_v2(true_target.numpy(), pred_target,old_mask)
+            
             # Update best accuracy
             if all_acc > best_all_acc:
                 best_all_acc = all_acc
@@ -272,13 +275,13 @@ for source in source_list:
             print('Iter {}: All Accuracy - {:.3f}; Old Accuracy - {:.3f}; New Accuracy - {:.3f}'.format(
                 iteration_num_total, all_acc, old_acc, new_acc
             ))
-            # At the end of the loop for this source-target combination, save the best values
-            results["Source"].append(source)
-            results["Target"].append(target)
-            results["Best_All_Accuracy"].append(best_all_acc)
-            results["Best_Old_Accuracy"].append(best_old_acc)
-            results["Best_New_Accuracy"].append(best_new_acc)
+        # At the end of the loop for this source-target combination, save the best values
+        results["Source"].append(source)
+        results["Target"].append(target)
+        results["Best_All_Accuracy"].append(best_all_acc)
+        results["Best_Old_Accuracy"].append(best_old_acc)
+        results["Best_New_Accuracy"].append(best_new_acc)
 # Save results to an Excel file
 df_results = pd.DataFrame(results)
-df_results.to_excel(f"{args.dataset}_accuracies.xlsx", index=False)
+df_results.to_excel(f"{args.dataset}_accuracies_v2.xlsx", index=False)
 print("Results saved to 'best_accuracies.xlsx'")
